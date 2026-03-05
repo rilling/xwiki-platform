@@ -24,8 +24,8 @@ require(['jquery', config.treeWebjar], function ($) {
   const selectButton = $('#move.xform .modal-footer .btn-primary');
   const modal = $('#move.xform div.documentTree');
   const treeSelector = $('#move.xform button.newLocationTree');
-  var tree = undefined;
-  var pageWhiteIcon = undefined;
+  let tree = undefined;
+  let pageWhiteIcon = undefined;
 
   function validateSelection(instance) {
     const selected = instance.get_selected(false)[0];
@@ -36,7 +36,7 @@ require(['jquery', config.treeWebjar], function ($) {
   function getPageWhiteIcon() {
     if (pageWhiteIcon === undefined) {
       const iconURL = `${XWiki.contextPath}/rest/wikis/${encodeURIComponent(XWiki.currentWiki)}/iconThemes/icons?name=page_white`;
-      var response = window.fetch(iconURL, {
+      let response = window.fetch(iconURL, {
         headers: {
           'Accept': 'application/json'
         }
