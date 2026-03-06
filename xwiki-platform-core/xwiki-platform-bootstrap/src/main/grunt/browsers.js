@@ -1,6 +1,6 @@
 // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 
-var browsers = {
+const browsers = {
   safariMac: {
     base: 'BrowserStack',
     os: 'OS X',
