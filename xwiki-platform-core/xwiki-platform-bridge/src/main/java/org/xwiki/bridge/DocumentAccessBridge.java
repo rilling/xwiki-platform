@@ -190,7 +190,7 @@ public interface DocumentAccessBridge
      * @deprecated replaced by {@link #exists(DocumentReference)} since 2.2.1
      * @throws Exception when failing to check document existence
      */
-    @Deprecated
+    @Deprecated(since = "2.2.1", forRemoval = false)
     boolean exists(String documentReference) throws Exception;
 
     /**
