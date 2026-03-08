@@ -43,15 +43,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Analyze with SonarCloud
-        uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          with:
-          args: >
-            -Dsonar.projectKey=rollingjungle_david-sonar-xwiki
-            -Dsonar.organization=rollingjungle
-            -Dsonar.sources=xwiki-platform-core/xwiki-platform-crypto
-            -Dsonar.java.binaries=**/target/classes
-            -Dsonar.projectBaseDir=.
-          projectBaseDir: .
+    - name: Analyze with SonarCloud
+      uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=rollingjungle_david-sonar-xwiki
+          -Dsonar.organization=rollingjungle
+          -Dsonar.sources=xwiki-platform-core/xwiki-platform-crypto
+          -Dsonar.java.binaries=**/target/classes
+        projectBaseDir: .
