@@ -36,12 +36,6 @@ import org.xwiki.security.authorization.Right;
  */
 public abstract class AbstractScriptingStore
 {
-    /**
-     * @deprecated use {@link StandardCharsets#UTF_8} instead
-     */
-    @Deprecated
-    protected static final Charset UTF8 = Charset.forName("UTF-8");
-
     protected StoreReference storeReference;
 
     private ContextualAuthorizationManager contextualAuthorizationManager;
