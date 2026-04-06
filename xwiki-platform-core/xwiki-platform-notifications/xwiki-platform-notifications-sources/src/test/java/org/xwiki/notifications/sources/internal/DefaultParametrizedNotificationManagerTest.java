@@ -128,12 +128,6 @@ class DefaultParametrizedNotificationManagerTest
         }).when(this.groupingEventManager).augmentCompositeEvents(any(), any(), any(), eq("alert"));
     }
 
-    private Event createMockedEvent()
-    {
-        Event event = mock(Event.class);
-        when(event.getDate()).thenReturn(new Date(1L));
-        return event;
-    }
 
     @Test
     void getEventsWhenNoPreferences() throws Exception
@@ -158,12 +152,12 @@ class DefaultParametrizedNotificationManagerTest
     void getEventsWith2Queries() throws Exception
     {
         // Mocks
-        Event event1 = createMockedEvent();
-        Event event2 = createMockedEvent();
-        Event event3 = createMockedEvent();
-        Event event4 = createMockedEvent();
-        Event event5 = createMockedEvent();
-        Event event6 = createMockedEvent();
+        Event event1 = NotificationTestEventFactory.createMockedEvent();
+        Event event2 = NotificationTestEventFactory.createMockedEvent();
+        Event event3 = NotificationTestEventFactory.createMockedEvent();
+        Event event4 = NotificationTestEventFactory.createMockedEvent();
+        Event event5 = NotificationTestEventFactory.createMockedEvent();
+        Event event6 = NotificationTestEventFactory.createMockedEvent();
 
         DocumentReference doc1 = new DocumentReference("xwiki", "Main", "WebHome");
         when(event1.getDocument()).thenReturn(doc1);
@@ -227,12 +221,12 @@ class DefaultParametrizedNotificationManagerTest
     void getEventsCount() throws Exception
     {
         // Mocks
-        Event event1 = createMockedEvent();
-        Event event2 = createMockedEvent();
-        Event event3 = createMockedEvent();
-        Event event4 = createMockedEvent();
-        Event event5 = createMockedEvent();
-        Event event6 = createMockedEvent();
+        Event event1 = NotificationTestEventFactory.createMockedEvent();
+        Event event2 = NotificationTestEventFactory.createMockedEvent();
+        Event event3 = NotificationTestEventFactory.createMockedEvent();
+        Event event4 = NotificationTestEventFactory.createMockedEvent();
+        Event event5 = NotificationTestEventFactory.createMockedEvent();
+        Event event6 = NotificationTestEventFactory.createMockedEvent();
 
         when(recordableEventDescriptorHelper.hasDescriptor(isNull(), any(DocumentReference.class))).thenReturn(true);
 
@@ -253,21 +247,8 @@ class DefaultParametrizedNotificationManagerTest
         verifyNoInteractions(event6);
     }
 
-    private Event createMockedEvent(String type, DocumentReference user, DocumentReference doc, Date date,
-        String groupId)
-    {
-        Event event = mock(Event.class);
-        when(event.getDate()).thenReturn(date);
-        when(event.getDocument()).thenReturn(doc);
-        when(event.getUser()).thenReturn(user);
-        when(event.getType()).thenReturn(type);
-        when(event.getGroupId()).thenReturn(groupId);
+  
 
-        when(event.toString()).thenReturn(String.format("[%s] Event [%s] on document [%s] by [%s] on [%s]", groupId,
-            type, doc, user, date.toString()));
-
-        return event;
-    }
 
     @Test
     void getEventsXWIKI15151() throws Exception
@@ -275,8 +256,8 @@ class DefaultParametrizedNotificationManagerTest
         DocumentReference userA = new DocumentReference("xwiki", "XWiki", "UserA");
 
         // Example taken from a real case
-        Event event1 = createMockedEvent("update", userA, userA, new Date(1510567729000L), "id1");
-        Event event2 = createMockedEvent("update", userA, userA, new Date(1510567729000L), "id2");
+        Event event1 = NotificationTestEventFactory.createMockedEvent("update", userA, userA, new Date(1510567729000L), "id1");
+        Event event2 = NotificationTestEventFactory.createMockedEvent("update", userA, userA, new Date(1510567729000L), "id2");
 
         when(authorizationManager.hasAccess(eq(Right.VIEW), eq(userReference), any(DocumentReference.class)))
             .thenReturn(true);
@@ -322,8 +303,8 @@ class DefaultParametrizedNotificationManagerTest
         DocumentReference userA = new DocumentReference("xwiki", "XWiki", "UserA");
 
         // Example taken from a real case
-        Event event1 = createMockedEvent("customThing", userA, userA, new Date(1510567729000L), "id1");
-        Event event2 = createMockedEvent("update", userA, userA, new Date(1510567729000L), "id2");
+        Event event1 = NotificationTestEventFactory.createMockedEvent("customThing", userA, userA, new Date(1510567729000L), "id1");
+        Event event2 = NotificationTestEventFactory.createMockedEvent("update", userA, userA, new Date(1510567729000L), "id2");
 
         when(authorizationManager.hasAccess(eq(Right.VIEW), eq(userReference), any(DocumentReference.class)))
             .thenReturn(true);
@@ -351,7 +332,7 @@ class DefaultParametrizedNotificationManagerTest
     @Test
     void getEventsWhenCurrentUserNotAuthorized() throws Exception
     {
-        Event event = createMockedEvent();
+        Event event = NotificationTestEventFactory.createMockedEvent();
 
         DocumentReference doc = new DocumentReference("xwiki", "Main", "Bike");
         when(event.getDocument()).thenReturn(doc);
@@ -379,7 +360,7 @@ class DefaultParametrizedNotificationManagerTest
     @Test
     void getEventsFilterOnTarget() throws Exception
     {
-        Event event = createMockedEvent();
+        Event event = NotificationTestEventFactory.createMockedEvent();
         when(event.getType()).thenReturn("update");
         when(event.getTarget()).thenReturn(new HashSet<>(Arrays.asList("Foo.bar")));
 

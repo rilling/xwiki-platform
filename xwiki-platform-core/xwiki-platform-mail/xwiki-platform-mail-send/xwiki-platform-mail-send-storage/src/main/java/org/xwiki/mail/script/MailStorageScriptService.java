@@ -298,7 +298,7 @@ public class MailStorageScriptService extends AbstractMailScriptService
         return this.storageConfiguration;
     }
 
-    private Map<String, Object> normalizeFilterMap(Map<String, Object> filterMap)
+    protected Map<String, Object> normalizeFilterMap(Map<String, Object> filterMap)
     {
         // Force the wiki to be the current wiki to prevent any subwiki to see the list of mail statuses from other
         // wikis
@@ -310,7 +310,7 @@ public class MailStorageScriptService extends AbstractMailScriptService
         return normalizedMap;
     }
 
-    private MimeMessage loadMessage(Session session, String batchId, String mailId) throws MailStoreException
+    protected MimeMessage loadMessage(Session session, String batchId, String mailId) throws MailStoreException
     {
         MimeMessage message = this.mailContentStore.load(session, batchId, mailId);
         return message;
