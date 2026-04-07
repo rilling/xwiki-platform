@@ -72,6 +72,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 })
 class TestDefinitionParserTest
 {
+    
     @InjectComponentManager
     private ComponentManager componentManager;
 
