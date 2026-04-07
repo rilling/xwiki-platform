@@ -39,6 +39,7 @@ import org.xwiki.query.Query;
 import org.xwiki.query.QueryException;
 import org.xwiki.query.QueryManager;
 import org.xwiki.rest.XWikiRestException;
+import org.xwiki.rest.internal.resources.ResourceTestUtils;
 import org.xwiki.rest.model.jaxb.PageSummary;
 import org.xwiki.rest.model.jaxb.Pages;
 import org.xwiki.security.SecurityConfiguration;
@@ -51,7 +52,6 @@ import org.xwiki.test.mockito.MockitoComponentManager;
 
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.doc.XWikiDocument;
-import com.xpn.xwiki.web.Utils;
 import com.xpn.xwiki.web.XWikiURLFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -106,15 +106,7 @@ class WikiPagesResourceImplTest
     void setUp(MockitoComponentManager componentManager)
         throws Exception
     {
-        Utils.setComponentManager(componentManager);
-
-        // Because XWikiResource injects the context component manager, it exists as a mock, and we thus need to mock
-        // its behavior - otherwise it would just be ignored.
-        when(this.contextComponentManager.getInstance(any()))
-            .thenAnswer(invocation -> componentManager.getInstance(invocation.getArgument(0)));
-        when(this.contextComponentManager.getInstance(any(), any()))
-            .thenAnswer(
-                invocation -> componentManager.getInstance(invocation.getArgument(0), invocation.getArgument(1)));
+        ResourceTestUtils.setUpResourceTest(componentManager, this.contextComponentManager, this.securityConfiguration);
 
         when(this.uriInfo.getBaseUri()).thenReturn(new URI("https://test/"));
         FieldUtils.writeField(this.wikiPagesResource, "uriInfo", this.uriInfo, true);
@@ -122,7 +114,6 @@ class WikiPagesResourceImplTest
         this.context = contextProvider.get();
         when(this.context.getURLFactory()).thenReturn(urlFactory);
 
-        when(this.securityConfiguration.getQueryItemsLimit()).thenReturn(1000);
     }
 
     @Test
