@@ -214,7 +214,6 @@ class TestDefinitionParserTest
         assertThat("State in access rules of document 1 of space 1 of main wiki mismatch", states, hasItems(
             RuleState.ALLOW
         ));
-
         List<TestRequiredRight> testRequiredRights = new ArrayList<>(document.getRequiredRights());
         assertThat("There must be 2 required rights on document 1", testRequiredRights.size(), equalTo(2));
         assertThat("The first required right on document 1 must have ADMIN right", testRequiredRights.get(0).getRight(),
