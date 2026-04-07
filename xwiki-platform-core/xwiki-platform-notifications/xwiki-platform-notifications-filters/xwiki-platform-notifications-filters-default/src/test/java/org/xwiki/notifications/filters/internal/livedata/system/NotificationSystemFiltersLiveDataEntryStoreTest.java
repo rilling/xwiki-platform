@@ -40,6 +40,7 @@ import org.xwiki.notifications.filters.internal.FilterPreferencesModelBridge;
 import org.xwiki.notifications.filters.internal.ToggleableNotificationFilter;
 import org.xwiki.notifications.filters.internal.ToggleableNotificationFilterActivation;
 import org.xwiki.notifications.filters.internal.livedata.NotificationFilterLiveDataTranslationHelper;
+import org.xwiki.notifications.filters.internal.NotificationFiltersLiveDataEntryStoreTestHelper;
 import org.xwiki.security.authorization.ContextualAuthorizationManager;
 import org.xwiki.security.authorization.Right;
 import org.xwiki.test.junit5.mockito.ComponentTest;
@@ -97,51 +98,17 @@ class NotificationSystemFiltersLiveDataEntryStoreTest
     @Test
     void getMissingTarget()
     {
-        LiveDataQuery query = mock(LiveDataQuery.class);
-        LiveDataQuery.Source source = mock(LiveDataQuery.Source.class);
-        when(query.getSource()).thenReturn(source);
-        when(source.getParameters()).thenReturn(Map.of());
-        LiveDataException liveDataException = assertThrows(LiveDataException.class, () -> this.entryStore.get(query));
-        assertEquals("The target source parameter is mandatory.", liveDataException.getMessage());
+        NotificationFiltersLiveDataEntryStoreTestHelper.assertMissingTarget(query -> this.entryStore.get(query));
     }
 
     @Test
     void getBadAuthorization() throws LiveDataException
     {
-        LiveDataQuery query = mock(LiveDataQuery.class);
-        LiveDataQuery.Source source = mock(LiveDataQuery.Source.class);
-        when(query.getSource()).thenReturn(source);
-        when(source.getParameters()).thenReturn(Map.of(
-            "target", "wiki",
-            "wiki", "foo"
-        ));
-        DocumentReference userDoc = new DocumentReference("xwiki", "XWiki", "Foo");
-        when(this.contextualAuthorizationManager.hasAccess(Right.ADMIN)).thenReturn(false);
-        when(context.getUserReference()).thenReturn(userDoc);
-        LiveDataException liveDataException = assertThrows(LiveDataException.class, () -> this.entryStore.get(query));
-        assertEquals("You don't have rights to access those information.", liveDataException.getMessage());
-
-        when(this.contextualAuthorizationManager.hasAccess(Right.ADMIN)).thenReturn(true);
-        LiveData emptyLiveData = new LiveData();
-        assertEquals(emptyLiveData, this.entryStore.get(query));
-
-        when(source.getParameters()).thenReturn(Map.of(
-            "target", "user",
-            "user", "xwiki:XWiki.Bar"
-        ));
-        when(this.contextualAuthorizationManager.hasAccess(Right.ADMIN)).thenReturn(false);
-        liveDataException = assertThrows(LiveDataException.class, () -> this.entryStore.get(query));
-        assertEquals("You don't have rights to access those information.", liveDataException.getMessage());
-
-        when(this.contextualAuthorizationManager.hasAccess(Right.ADMIN)).thenReturn(true);
-        assertEquals(emptyLiveData, this.entryStore.get(query));
-
-        when(this.contextualAuthorizationManager.hasAccess(Right.ADMIN)).thenReturn(false);
-        when(source.getParameters()).thenReturn(Map.of(
-            "target", "user",
-            "user", "xwiki:XWiki.Foo"
-        ));
-        assertEquals(emptyLiveData, this.entryStore.get(query));
+        NotificationFiltersLiveDataEntryStoreTestHelper.assertBadAuthorization(
+            query -> this.entryStore.get(query),
+            this.contextualAuthorizationManager,
+            this.context
+        );
     }
 
     @Test
