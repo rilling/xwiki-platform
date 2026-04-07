@@ -72,7 +72,7 @@ export class XWikiStorage extends AbstractStorage {
   ): Promise<PageAttachment | undefined> {
     const attachments = await this.getAttachments(page);
     if (attachments) {
-      return attachments.attachments.filter((a) => a.reference == name)[0];
+      return attachments.attachments.find((a) => a.reference == name);
     }
   }
 

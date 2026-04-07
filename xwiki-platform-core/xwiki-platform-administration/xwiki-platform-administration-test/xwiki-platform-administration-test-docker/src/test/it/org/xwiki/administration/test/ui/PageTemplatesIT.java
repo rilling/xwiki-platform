@@ -78,7 +78,7 @@ class PageTemplatesIT
     public static final String TEMPLATE_NAME = "TestTemplate";
 
     @BeforeEach
-    public void setup(TestUtils setup)
+    void setup(TestUtils setup)
     {
         setup.loginAsSuperAdmin();
     }
