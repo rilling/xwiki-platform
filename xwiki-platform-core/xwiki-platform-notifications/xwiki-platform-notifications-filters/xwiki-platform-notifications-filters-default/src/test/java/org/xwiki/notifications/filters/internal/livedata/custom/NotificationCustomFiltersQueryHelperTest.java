@@ -58,6 +58,110 @@ class NotificationCustomFiltersQueryHelperTest
     @MockComponent
     private QueryManager queryManager;
 
+    private LiveDataQuery createFilterQuery(Long offset, int limit)
+    {
+        LiveDataQuery ldQuery = mock(LiveDataQuery.class);
+        when(ldQuery.getOffset()).thenReturn(offset);
+        when(ldQuery.getLimit()).thenReturn(limit);
+        return ldQuery;
+    }
+
+    private LiveDataQuery.Constraint createConstraint(String name, String operator, String value)
+    {
+        LiveDataQuery.Constraint constraint = mock(LiveDataQuery.Constraint.class, name);
+        when(constraint.getOperator()).thenReturn(operator);
+        when(constraint.getValue()).thenReturn(value);
+        return constraint;
+    }
+
+    private LiveDataQuery.Filter createFilter(String name, String property, List<LiveDataQuery.Constraint> constraints)
+    {
+        LiveDataQuery.Filter filter = mock(LiveDataQuery.Filter.class, name);
+        when(filter.getProperty()).thenReturn(property);
+        when(filter.getConstraints()).thenReturn(constraints);
+        return filter;
+    }
+
+    private LiveDataQuery.Filter createLocationFilter()
+    {
+        LiveDataQuery.Filter filter = createFilter("filter1", "location", List.of(
+            createConstraint("filter1Constraint1", "startsWith", "foo"),
+            createConstraint("filter1Constraint2", "contains", "bar"),
+            createConstraint("filter1Constraint3", "equals", "buz")
+        ));
+        when(filter.isMatchAll()).thenReturn(false);
+        return filter;
+    }
+
+    private List<LiveDataQuery.Filter> createDefaultFilters()
+    {
+        return List.of(
+            createLocationFilter(),
+            createFilter("filter2", "eventTypes", List.of(
+                createConstraint("filter2Constraint", "equals", "__ALL_EVENTS__")
+            )),
+            createFilter("filter3", "isEnabled", List.of(
+                createConstraint("filter3Constraint", "equals", "true")
+            )),
+            createFilter("filter4", "scope", List.of(
+                createConstraint("filter4Constraint", "equals", "PAGE")
+            )),
+            createFilter("filter5", "filterType", List.of(
+                createConstraint("filter5Constraint", "equals", "INCLUSIVE")
+            ))
+        );
+    }
+
+    private DefaultQueryParameter startsWithParam(String value)
+    {
+        DefaultQueryParameter parameter = new DefaultQueryParameter(null);
+        parameter.literal(value).anyChars();
+        return parameter;
+    }
+
+    private DefaultQueryParameter containsParam(String value)
+    {
+        DefaultQueryParameter parameter = new DefaultQueryParameter(null);
+        parameter.anyChars().literal(value).anyChars();
+        return parameter;
+    }
+
+    private DefaultQueryParameter equalsParam(String value)
+    {
+        DefaultQueryParameter parameter = new DefaultQueryParameter(null);
+        parameter.literal(value);
+        return parameter;
+    }
+
+    private void mockCommonBindings(Query query, String owner, DefaultQueryParameter queryParameter1,
+        DefaultQueryParameter queryParameter2, DefaultQueryParameter queryParameter3, String wikiName)
+        throws QueryException
+    {
+        when(query.bindValue("owner", owner)).thenReturn(query);
+        when(query.bindValue("constraint_0", queryParameter1)).thenReturn(query);
+        when(query.bindValue("constraint_1", queryParameter2)).thenReturn(query);
+        when(query.bindValue("constraint_2", queryParameter3)).thenReturn(query);
+        when(query.bindValue("filterType", NotificationFilterType.INCLUSIVE)).thenReturn(query);
+        when(query.setWiki(wikiName)).thenReturn(query);
+    }
+
+    private void mockSortEntries(LiveDataQuery ldQuery)
+    {
+        LiveDataQuery.SortEntry sortEntry1 = mock(LiveDataQuery.SortEntry.class, "sortEntry1");
+        when(sortEntry1.isDescending()).thenReturn(false);
+        when(sortEntry1.getProperty()).thenReturn("scope");
+
+        LiveDataQuery.SortEntry sortEntry2 = mock(LiveDataQuery.SortEntry.class, "sortEntry2");
+        when(sortEntry2.isDescending()).thenReturn(true);
+        when(sortEntry2.getProperty()).thenReturn("isEnabled");
+
+        LiveDataQuery.SortEntry sortEntry3 = mock(LiveDataQuery.SortEntry.class, "sortEntry3");
+        when(sortEntry3.isDescending()).thenReturn(true);
+        when(sortEntry3.getProperty()).thenReturn("notificationFormats");
+
+        when(ldQuery.getSort()).thenReturn(List.of(sortEntry1, sortEntry2, sortEntry3));
+    }
+
     @Test
     void getFilterPreferencesNoFilterNoSort() throws QueryException, LiveDataException
     {
@@ -218,59 +322,8 @@ class NotificationCustomFiltersQueryHelperTest
         int limit = 12;
         WikiReference wikiReference = new WikiReference(wikiName);
 
-        LiveDataQuery ldQuery = mock(LiveDataQuery.class);
-        when(ldQuery.getOffset()).thenReturn(offset);
-        when(ldQuery.getLimit()).thenReturn(limit);
-
-        LiveDataQuery.Filter filter1 = mock(LiveDataQuery.Filter.class, "filter1");
-        when(filter1.getProperty()).thenReturn("location");
-        when(filter1.isMatchAll()).thenReturn(false);
-        LiveDataQuery.Constraint filter1Constraint1 = mock(LiveDataQuery.Constraint.class, "filter1Constraint1");
-        when(filter1Constraint1.getOperator()).thenReturn("startsWith");
-        when(filter1Constraint1.getValue()).thenReturn("foo");
-        LiveDataQuery.Constraint filter1Constraint2 = mock(LiveDataQuery.Constraint.class, "filter1Constraint2");
-        when(filter1Constraint2.getOperator()).thenReturn("contains");
-        when(filter1Constraint2.getValue()).thenReturn("bar");
-        LiveDataQuery.Constraint filter1Constraint3 = mock(LiveDataQuery.Constraint.class, "filter1Constraint3");
-        when(filter1Constraint3.getOperator()).thenReturn("equals");
-        when(filter1Constraint3.getValue()).thenReturn("buz");
-        when(filter1.getConstraints()).thenReturn(List.of(filter1Constraint1, filter1Constraint2, filter1Constraint3));
-
-        LiveDataQuery.Filter filter2 = mock(LiveDataQuery.Filter.class, "filter2");
-        when(filter2.getProperty()).thenReturn("eventTypes");
-        LiveDataQuery.Constraint filter2Constraint = mock(LiveDataQuery.Constraint.class, "filter2Constraint");
-        when(filter2Constraint.getOperator()).thenReturn("equals");
-        when(filter2Constraint.getValue()).thenReturn("__ALL_EVENTS__");
-        when(filter2.getConstraints()).thenReturn(List.of(filter2Constraint));
-
-        LiveDataQuery.Filter filter3 = mock(LiveDataQuery.Filter.class, "filter3");
-        when(filter3.getProperty()).thenReturn("isEnabled");
-        LiveDataQuery.Constraint filter3Constraint = mock(LiveDataQuery.Constraint.class, "filter3Constraint");
-        when(filter3Constraint.getOperator()).thenReturn("equals");
-        when(filter3Constraint.getValue()).thenReturn("true");
-        when(filter3.getConstraints()).thenReturn(List.of(filter3Constraint));
-
-        LiveDataQuery.Filter filter4 = mock(LiveDataQuery.Filter.class, "filter4");
-        when(filter4.getProperty()).thenReturn("scope");
-        LiveDataQuery.Constraint filter4Constraint = mock(LiveDataQuery.Constraint.class, "filter4Constraint");
-        when(filter4Constraint.getOperator()).thenReturn("equals");
-        when(filter4Constraint.getValue()).thenReturn("PAGE");
-        when(filter4.getConstraints()).thenReturn(List.of(filter4Constraint));
-
-        LiveDataQuery.Filter filter5 = mock(LiveDataQuery.Filter.class, "filter5");
-        when(filter5.getProperty()).thenReturn("filterType");
-        LiveDataQuery.Constraint filter5Constraint = mock(LiveDataQuery.Constraint.class, "filter5Constraint");
-        when(filter5Constraint.getOperator()).thenReturn("equals");
-        when(filter5Constraint.getValue()).thenReturn("INCLUSIVE");
-        when(filter5.getConstraints()).thenReturn(List.of(filter5Constraint));
-
-        when(ldQuery.getFilters()).thenReturn(List.of(
-            filter1,
-            filter2,
-            filter3,
-            filter4,
-            filter5
-        ));
+        LiveDataQuery ldQuery = createFilterQuery(offset, limit);
+        when(ldQuery.getFilters()).thenReturn(createDefaultFilters());
 
         String queryString = "select nfp from DefaultNotificationFilterPreference nfp where owner = :owner "
             + "and ((nfp.pageOnly like :constraint_0 or nfp.page like :constraint_0 or nfp.wiki like :constraint_0 or "
@@ -282,23 +335,12 @@ class NotificationCustomFiltersQueryHelperTest
 
         Query query = mock(Query.class);
         when(this.queryManager.createQuery(queryString, Query.HQL)).thenReturn(query);
-        when(query.bindValue("owner", owner)).thenReturn(query);
 
-        DefaultQueryParameter queryParameter1 = new DefaultQueryParameter(null);
-        queryParameter1.literal("foo").anyChars();
-        when(query.bindValue("constraint_0", queryParameter1)).thenReturn(query);
+        DefaultQueryParameter queryParameter1 = startsWithParam("foo");
+        DefaultQueryParameter queryParameter2 = containsParam("bar");
+        DefaultQueryParameter queryParameter3 = equalsParam("buz");
 
-        DefaultQueryParameter queryParameter2 = new DefaultQueryParameter(null);
-        queryParameter2.anyChars().literal("bar").anyChars();
-        when(query.bindValue("constraint_1", queryParameter2)).thenReturn(query);
-
-        DefaultQueryParameter queryParameter3 = new DefaultQueryParameter(null);
-        queryParameter3.literal("buz");
-        when(query.bindValue("constraint_2", queryParameter3)).thenReturn(query);
-
-        when(query.bindValue("filterType", NotificationFilterType.INCLUSIVE)).thenReturn(query);
-
-        when(query.setWiki(wikiName)).thenReturn(query);
+        mockCommonBindings(query, owner, queryParameter1, queryParameter2, queryParameter3, wikiName);
         when(query.setOffset(offset.intValue())).thenReturn(query);
         when(query.setLimit(limit)).thenReturn(query);
 
@@ -328,59 +370,8 @@ class NotificationCustomFiltersQueryHelperTest
         int limit = 12;
         WikiReference wikiReference = new WikiReference(wikiName);
 
-        LiveDataQuery ldQuery = mock(LiveDataQuery.class);
-        when(ldQuery.getOffset()).thenReturn(offset);
-        when(ldQuery.getLimit()).thenReturn(limit);
-
-        LiveDataQuery.Filter filter1 = mock(LiveDataQuery.Filter.class, "filter1");
-        when(filter1.getProperty()).thenReturn("location");
-        when(filter1.isMatchAll()).thenReturn(false);
-        LiveDataQuery.Constraint filter1Constraint1 = mock(LiveDataQuery.Constraint.class, "filter1Constraint1");
-        when(filter1Constraint1.getOperator()).thenReturn("startsWith");
-        when(filter1Constraint1.getValue()).thenReturn("foo");
-        LiveDataQuery.Constraint filter1Constraint2 = mock(LiveDataQuery.Constraint.class, "filter1Constraint2");
-        when(filter1Constraint2.getOperator()).thenReturn("contains");
-        when(filter1Constraint2.getValue()).thenReturn("bar");
-        LiveDataQuery.Constraint filter1Constraint3 = mock(LiveDataQuery.Constraint.class, "filter1Constraint3");
-        when(filter1Constraint3.getOperator()).thenReturn("equals");
-        when(filter1Constraint3.getValue()).thenReturn("buz");
-        when(filter1.getConstraints()).thenReturn(List.of(filter1Constraint1, filter1Constraint2, filter1Constraint3));
-
-        LiveDataQuery.Filter filter2 = mock(LiveDataQuery.Filter.class, "filter2");
-        when(filter2.getProperty()).thenReturn("eventTypes");
-        LiveDataQuery.Constraint filter2Constraint = mock(LiveDataQuery.Constraint.class, "filter2Constraint");
-        when(filter2Constraint.getOperator()).thenReturn("equals");
-        when(filter2Constraint.getValue()).thenReturn("__ALL_EVENTS__");
-        when(filter2.getConstraints()).thenReturn(List.of(filter2Constraint));
-
-        LiveDataQuery.Filter filter3 = mock(LiveDataQuery.Filter.class, "filter3");
-        when(filter3.getProperty()).thenReturn("isEnabled");
-        LiveDataQuery.Constraint filter3Constraint = mock(LiveDataQuery.Constraint.class, "filter3Constraint");
-        when(filter3Constraint.getOperator()).thenReturn("equals");
-        when(filter3Constraint.getValue()).thenReturn("true");
-        when(filter3.getConstraints()).thenReturn(List.of(filter3Constraint));
-
-        LiveDataQuery.Filter filter4 = mock(LiveDataQuery.Filter.class, "filter4");
-        when(filter4.getProperty()).thenReturn("scope");
-        LiveDataQuery.Constraint filter4Constraint = mock(LiveDataQuery.Constraint.class, "filter4Constraint");
-        when(filter4Constraint.getOperator()).thenReturn("equals");
-        when(filter4Constraint.getValue()).thenReturn("PAGE");
-        when(filter4.getConstraints()).thenReturn(List.of(filter4Constraint));
-
-        LiveDataQuery.Filter filter5 = mock(LiveDataQuery.Filter.class, "filter5");
-        when(filter5.getProperty()).thenReturn("filterType");
-        LiveDataQuery.Constraint filter5Constraint = mock(LiveDataQuery.Constraint.class, "filter5Constraint");
-        when(filter5Constraint.getOperator()).thenReturn("equals");
-        when(filter5Constraint.getValue()).thenReturn("INCLUSIVE");
-        when(filter5.getConstraints()).thenReturn(List.of(filter5Constraint));
-
-        when(ldQuery.getFilters()).thenReturn(List.of(
-            filter1,
-            filter2,
-            filter3,
-            filter4,
-            filter5
-        ));
+        LiveDataQuery ldQuery = createFilterQuery(offset, limit);
+        when(ldQuery.getFilters()).thenReturn(createDefaultFilters());
 
         String queryString = "select count(nfp.id) from DefaultNotificationFilterPreference nfp where owner = :owner "
             + "and ((nfp.pageOnly like :constraint_0 or nfp.page like :constraint_0 or nfp.wiki like :constraint_0 or "
@@ -392,23 +383,12 @@ class NotificationCustomFiltersQueryHelperTest
 
         Query query = mock(Query.class);
         when(this.queryManager.createQuery(queryString, Query.HQL)).thenReturn(query);
-        when(query.bindValue("owner", owner)).thenReturn(query);
 
-        DefaultQueryParameter queryParameter1 = new DefaultQueryParameter(null);
-        queryParameter1.literal("foo").anyChars();
-        when(query.bindValue("constraint_0", queryParameter1)).thenReturn(query);
+        DefaultQueryParameter queryParameter1 = startsWithParam("foo");
+        DefaultQueryParameter queryParameter2 = containsParam("bar");
+        DefaultQueryParameter queryParameter3 = equalsParam("buz");
 
-        DefaultQueryParameter queryParameter2 = new DefaultQueryParameter(null);
-        queryParameter2.anyChars().literal("bar").anyChars();
-        when(query.bindValue("constraint_1", queryParameter2)).thenReturn(query);
-
-        DefaultQueryParameter queryParameter3 = new DefaultQueryParameter(null);
-        queryParameter3.literal("buz");
-        when(query.bindValue("constraint_2", queryParameter3)).thenReturn(query);
-
-        when(query.bindValue("filterType", NotificationFilterType.INCLUSIVE)).thenReturn(query);
-
-        when(query.setWiki(wikiName)).thenReturn(query);
+        mockCommonBindings(query, owner, queryParameter1, queryParameter2, queryParameter3, wikiName);
 
         when(query.execute()).thenReturn(List.of(3L));
         assertEquals(3L, this.queryHelper.countTotalFilters(ldQuery, owner, wikiReference));
@@ -431,73 +411,9 @@ class NotificationCustomFiltersQueryHelperTest
         int limit = 12;
         WikiReference wikiReference = new WikiReference(wikiName);
 
-        LiveDataQuery ldQuery = mock(LiveDataQuery.class);
-        when(ldQuery.getOffset()).thenReturn(offset);
-        when(ldQuery.getLimit()).thenReturn(limit);
-
-        LiveDataQuery.Filter filter1 = mock(LiveDataQuery.Filter.class, "filter1");
-        when(filter1.getProperty()).thenReturn("location");
-        when(filter1.isMatchAll()).thenReturn(false);
-        LiveDataQuery.Constraint filter1Constraint1 = mock(LiveDataQuery.Constraint.class, "filter1Constraint1");
-        when(filter1Constraint1.getOperator()).thenReturn("startsWith");
-        when(filter1Constraint1.getValue()).thenReturn("foo");
-        LiveDataQuery.Constraint filter1Constraint2 = mock(LiveDataQuery.Constraint.class, "filter1Constraint2");
-        when(filter1Constraint2.getOperator()).thenReturn("contains");
-        when(filter1Constraint2.getValue()).thenReturn("bar");
-        LiveDataQuery.Constraint filter1Constraint3 = mock(LiveDataQuery.Constraint.class, "filter1Constraint3");
-        when(filter1Constraint3.getOperator()).thenReturn("equals");
-        when(filter1Constraint3.getValue()).thenReturn("buz");
-        when(filter1.getConstraints()).thenReturn(List.of(filter1Constraint1, filter1Constraint2, filter1Constraint3));
-
-        LiveDataQuery.Filter filter2 = mock(LiveDataQuery.Filter.class, "filter2");
-        when(filter2.getProperty()).thenReturn("eventTypes");
-        LiveDataQuery.Constraint filter2Constraint = mock(LiveDataQuery.Constraint.class, "filter2Constraint");
-        when(filter2Constraint.getOperator()).thenReturn("equals");
-        when(filter2Constraint.getValue()).thenReturn("__ALL_EVENTS__");
-        when(filter2.getConstraints()).thenReturn(List.of(filter2Constraint));
-
-        LiveDataQuery.Filter filter3 = mock(LiveDataQuery.Filter.class, "filter3");
-        when(filter3.getProperty()).thenReturn("isEnabled");
-        LiveDataQuery.Constraint filter3Constraint = mock(LiveDataQuery.Constraint.class, "filter3Constraint");
-        when(filter3Constraint.getOperator()).thenReturn("equals");
-        when(filter3Constraint.getValue()).thenReturn("true");
-        when(filter3.getConstraints()).thenReturn(List.of(filter3Constraint));
-
-        LiveDataQuery.Filter filter4 = mock(LiveDataQuery.Filter.class, "filter4");
-        when(filter4.getProperty()).thenReturn("scope");
-        LiveDataQuery.Constraint filter4Constraint = mock(LiveDataQuery.Constraint.class, "filter4Constraint");
-        when(filter4Constraint.getOperator()).thenReturn("equals");
-        when(filter4Constraint.getValue()).thenReturn("PAGE");
-        when(filter4.getConstraints()).thenReturn(List.of(filter4Constraint));
-
-        LiveDataQuery.Filter filter5 = mock(LiveDataQuery.Filter.class, "filter5");
-        when(filter5.getProperty()).thenReturn("filterType");
-        LiveDataQuery.Constraint filter5Constraint = mock(LiveDataQuery.Constraint.class, "filter5Constraint");
-        when(filter5Constraint.getOperator()).thenReturn("equals");
-        when(filter5Constraint.getValue()).thenReturn("INCLUSIVE");
-        when(filter5.getConstraints()).thenReturn(List.of(filter5Constraint));
-
-        when(ldQuery.getFilters()).thenReturn(List.of(
-            filter1,
-            filter2,
-            filter3,
-            filter4,
-            filter5
-        ));
-
-        LiveDataQuery.SortEntry sortEntry1 = mock(LiveDataQuery.SortEntry.class, "sortEntry1");
-        when(sortEntry1.isDescending()).thenReturn(false);
-        when(sortEntry1.getProperty()).thenReturn("scope");
-
-        LiveDataQuery.SortEntry sortEntry2 = mock(LiveDataQuery.SortEntry.class, "sortEntry2");
-        when(sortEntry2.isDescending()).thenReturn(true);
-        when(sortEntry2.getProperty()).thenReturn("isEnabled");
-
-        LiveDataQuery.SortEntry sortEntry3 = mock(LiveDataQuery.SortEntry.class, "sortEntry3");
-        when(sortEntry3.isDescending()).thenReturn(true);
-        when(sortEntry3.getProperty()).thenReturn("notificationFormats");
-
-        when(ldQuery.getSort()).thenReturn(List.of(sortEntry1, sortEntry2, sortEntry3));
+        LiveDataQuery ldQuery = createFilterQuery(offset, limit);
+        when(ldQuery.getFilters()).thenReturn(createDefaultFilters());
+        mockSortEntries(ldQuery);
 
         String queryString = "select nfp from DefaultNotificationFilterPreference nfp where owner = :owner "
             + "and ((nfp.pageOnly like :constraint_0 or nfp.page like :constraint_0 or nfp.wiki like :constraint_0 or "
@@ -511,23 +427,12 @@ class NotificationCustomFiltersQueryHelperTest
 
         Query query = mock(Query.class);
         when(this.queryManager.createQuery(queryString, Query.HQL)).thenReturn(query);
-        when(query.bindValue("owner", owner)).thenReturn(query);
 
-        DefaultQueryParameter queryParameter1 = new DefaultQueryParameter(null);
-        queryParameter1.literal("foo").anyChars();
-        when(query.bindValue("constraint_0", queryParameter1)).thenReturn(query);
+        DefaultQueryParameter queryParameter1 = startsWithParam("foo");
+        DefaultQueryParameter queryParameter2 = containsParam("bar");
+        DefaultQueryParameter queryParameter3 = equalsParam("buz");
 
-        DefaultQueryParameter queryParameter2 = new DefaultQueryParameter(null);
-        queryParameter2.anyChars().literal("bar").anyChars();
-        when(query.bindValue("constraint_1", queryParameter2)).thenReturn(query);
-
-        DefaultQueryParameter queryParameter3 = new DefaultQueryParameter(null);
-        queryParameter3.literal("buz");
-        when(query.bindValue("constraint_2", queryParameter3)).thenReturn(query);
-
-        when(query.bindValue("filterType", NotificationFilterType.INCLUSIVE)).thenReturn(query);
-
-        when(query.setWiki(wikiName)).thenReturn(query);
+        mockCommonBindings(query, owner, queryParameter1, queryParameter2, queryParameter3, wikiName);
         when(query.setOffset(offset.intValue())).thenReturn(query);
         when(query.setLimit(limit)).thenReturn(query);
 
@@ -557,73 +462,9 @@ class NotificationCustomFiltersQueryHelperTest
         int limit = 12;
         WikiReference wikiReference = new WikiReference(wikiName);
 
-        LiveDataQuery ldQuery = mock(LiveDataQuery.class);
-        when(ldQuery.getOffset()).thenReturn(offset);
-        when(ldQuery.getLimit()).thenReturn(limit);
-
-        LiveDataQuery.Filter filter1 = mock(LiveDataQuery.Filter.class, "filter1");
-        when(filter1.getProperty()).thenReturn("location");
-        when(filter1.isMatchAll()).thenReturn(false);
-        LiveDataQuery.Constraint filter1Constraint1 = mock(LiveDataQuery.Constraint.class, "filter1Constraint1");
-        when(filter1Constraint1.getOperator()).thenReturn("startsWith");
-        when(filter1Constraint1.getValue()).thenReturn("foo");
-        LiveDataQuery.Constraint filter1Constraint2 = mock(LiveDataQuery.Constraint.class, "filter1Constraint2");
-        when(filter1Constraint2.getOperator()).thenReturn("contains");
-        when(filter1Constraint2.getValue()).thenReturn("bar");
-        LiveDataQuery.Constraint filter1Constraint3 = mock(LiveDataQuery.Constraint.class, "filter1Constraint3");
-        when(filter1Constraint3.getOperator()).thenReturn("equals");
-        when(filter1Constraint3.getValue()).thenReturn("buz");
-        when(filter1.getConstraints()).thenReturn(List.of(filter1Constraint1, filter1Constraint2, filter1Constraint3));
-
-        LiveDataQuery.Filter filter2 = mock(LiveDataQuery.Filter.class, "filter2");
-        when(filter2.getProperty()).thenReturn("eventTypes");
-        LiveDataQuery.Constraint filter2Constraint = mock(LiveDataQuery.Constraint.class, "filter2Constraint");
-        when(filter2Constraint.getOperator()).thenReturn("equals");
-        when(filter2Constraint.getValue()).thenReturn("__ALL_EVENTS__");
-        when(filter2.getConstraints()).thenReturn(List.of(filter2Constraint));
-
-        LiveDataQuery.Filter filter3 = mock(LiveDataQuery.Filter.class, "filter3");
-        when(filter3.getProperty()).thenReturn("isEnabled");
-        LiveDataQuery.Constraint filter3Constraint = mock(LiveDataQuery.Constraint.class, "filter3Constraint");
-        when(filter3Constraint.getOperator()).thenReturn("equals");
-        when(filter3Constraint.getValue()).thenReturn("true");
-        when(filter3.getConstraints()).thenReturn(List.of(filter3Constraint));
-
-        LiveDataQuery.Filter filter4 = mock(LiveDataQuery.Filter.class, "filter4");
-        when(filter4.getProperty()).thenReturn("scope");
-        LiveDataQuery.Constraint filter4Constraint = mock(LiveDataQuery.Constraint.class, "filter4Constraint");
-        when(filter4Constraint.getOperator()).thenReturn("equals");
-        when(filter4Constraint.getValue()).thenReturn("PAGE");
-        when(filter4.getConstraints()).thenReturn(List.of(filter4Constraint));
-
-        LiveDataQuery.Filter filter5 = mock(LiveDataQuery.Filter.class, "filter5");
-        when(filter5.getProperty()).thenReturn("filterType");
-        LiveDataQuery.Constraint filter5Constraint = mock(LiveDataQuery.Constraint.class, "filter5Constraint");
-        when(filter5Constraint.getOperator()).thenReturn("equals");
-        when(filter5Constraint.getValue()).thenReturn("INCLUSIVE");
-        when(filter5.getConstraints()).thenReturn(List.of(filter5Constraint));
-
-        when(ldQuery.getFilters()).thenReturn(List.of(
-            filter1,
-            filter2,
-            filter3,
-            filter4,
-            filter5
-        ));
-
-        LiveDataQuery.SortEntry sortEntry1 = mock(LiveDataQuery.SortEntry.class, "sortEntry1");
-        when(sortEntry1.isDescending()).thenReturn(false);
-        when(sortEntry1.getProperty()).thenReturn("scope");
-
-        LiveDataQuery.SortEntry sortEntry2 = mock(LiveDataQuery.SortEntry.class, "sortEntry2");
-        when(sortEntry2.isDescending()).thenReturn(true);
-        when(sortEntry2.getProperty()).thenReturn("isEnabled");
-
-        LiveDataQuery.SortEntry sortEntry3 = mock(LiveDataQuery.SortEntry.class, "sortEntry3");
-        when(sortEntry3.isDescending()).thenReturn(true);
-        when(sortEntry3.getProperty()).thenReturn("notificationFormats");
-
-        when(ldQuery.getSort()).thenReturn(List.of(sortEntry1, sortEntry2, sortEntry3));
+        LiveDataQuery ldQuery = createFilterQuery(offset, limit);
+        when(ldQuery.getFilters()).thenReturn(createDefaultFilters());
+        mockSortEntries(ldQuery);
 
         String queryString = "select count(nfp.id) from DefaultNotificationFilterPreference nfp where owner = :owner "
             + "and ((nfp.pageOnly like :constraint_0 or nfp.page like :constraint_0 or nfp.wiki like :constraint_0 or "
@@ -635,23 +476,12 @@ class NotificationCustomFiltersQueryHelperTest
 
         Query query = mock(Query.class);
         when(this.queryManager.createQuery(queryString, Query.HQL)).thenReturn(query);
-        when(query.bindValue("owner", owner)).thenReturn(query);
 
-        DefaultQueryParameter queryParameter1 = new DefaultQueryParameter(null);
-        queryParameter1.literal("foo").anyChars();
-        when(query.bindValue("constraint_0", queryParameter1)).thenReturn(query);
+        DefaultQueryParameter queryParameter1 = startsWithParam("foo");
+        DefaultQueryParameter queryParameter2 = containsParam("bar");
+        DefaultQueryParameter queryParameter3 = equalsParam("buz");
 
-        DefaultQueryParameter queryParameter2 = new DefaultQueryParameter(null);
-        queryParameter2.anyChars().literal("bar").anyChars();
-        when(query.bindValue("constraint_1", queryParameter2)).thenReturn(query);
-
-        DefaultQueryParameter queryParameter3 = new DefaultQueryParameter(null);
-        queryParameter3.literal("buz");
-        when(query.bindValue("constraint_2", queryParameter3)).thenReturn(query);
-
-        when(query.bindValue("filterType", NotificationFilterType.INCLUSIVE)).thenReturn(query);
-
-        when(query.setWiki(wikiName)).thenReturn(query);
+        mockCommonBindings(query, owner, queryParameter1, queryParameter2, queryParameter3, wikiName);
 
         when(query.execute()).thenReturn(List.of(3L));
         assertEquals(3L, this.queryHelper.countTotalFilters(ldQuery, owner, wikiReference));
