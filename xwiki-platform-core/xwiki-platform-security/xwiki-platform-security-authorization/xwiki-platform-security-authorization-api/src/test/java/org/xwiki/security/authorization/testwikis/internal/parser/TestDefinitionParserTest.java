@@ -59,21 +59,31 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * Test of the test definition parser itself.
  *
- * @version $Id$
+ * @version $Id: 60bb6de371a9cdc93ce18c929d64f506fcbe0944 $
  * @since 5.0M2
  */
 @ComponentTest
 @ComponentList({
-    DefaultStringEntityReferenceResolver.class,
-    DefaultStringEntityReferenceSerializer.class,
-    DefaultEntityReferenceProvider.class,
-    DefaultModelConfiguration.class,
-    DefaultSymbolScheme.class
+        DefaultStringEntityReferenceResolver.class,
+        DefaultStringEntityReferenceSerializer.class,
+        DefaultEntityReferenceProvider.class,
+        DefaultModelConfiguration.class,
+        DefaultSymbolScheme.class
 })
 class TestDefinitionParserTest
 {
     @InjectComponentManager
     private ComponentManager componentManager;
+
+    private void extractRuleData(Collection<TestAccessRule> rules, List<DocumentReference> userRefs,
+                                 List<Right> rights, List<RuleState> states)
+    {
+        for (TestAccessRule rule : rules) {
+            userRefs.add(rule.getUser());
+            rights.add(rule.getRight());
+            states.add(rule.getState());
+        }
+    }
 
     @Test
     void definitionTestParser() throws Exception
@@ -81,12 +91,12 @@ class TestDefinitionParserTest
         TestDefinitionParser parser = new DefaultTestDefinitionParser();
 
         EntityReferenceResolver<String> resolver =
-            componentManager.getInstance(EntityReferenceResolver.TYPE_STRING);
+                componentManager.getInstance(EntityReferenceResolver.TYPE_STRING);
         EntityReferenceSerializer<String> serializer =
-            componentManager.getInstance(EntityReferenceSerializer.TYPE_STRING);
+                componentManager.getInstance(EntityReferenceSerializer.TYPE_STRING);
 
         TestDefinition testDefinition =
-            parser.parse("testwikis" + File.separatorChar + "parserTester.xml", resolver, serializer);
+                parser.parse("testwikis" + File.separatorChar + "parserTester.xml", resolver, serializer);
 
         Collection<TestWiki> testWikis = testDefinition.getWikis();
 
@@ -99,7 +109,7 @@ class TestDefinitionParserTest
         assertThat("Main wiki should be named 'wiki'", mainwiki.getWikiReference(), equalTo(new WikiReference("wiki")));
         assertThat("Main wiki should be main wiki", mainwiki.isMainWiki(), is(true));
         assertThat("Main wiki owner should be XWiki.Admin", mainwiki.getOwner(), equalTo(
-            new DocumentReference("wiki", "XWiki", "Admin")));
+                new DocumentReference("wiki", "XWiki", "Admin")));
         assertThat("Main wiki should have 4 users (2 groups, and 2 users)", mainwiki.getUsers().size(), equalTo(4));
         assertThat("Main wiki should have 2 groups", mainwiki.getGroups().size(), equalTo(2));
         assertThat("Main wiki should have a groupA", mainwiki.getGroup("groupA"), notNullValue());
@@ -115,8 +125,8 @@ class TestDefinitionParserTest
         }
 
         assertThat("User A is in GroupA of the main wiki and the subwiki", groupRefs,
-            hasItems(new DocumentReference("wiki", "XWiki", "groupA"),
-                new DocumentReference("wiki1", "XWiki", "groupA")));
+                hasItems(new DocumentReference("wiki", "XWiki", "groupA"),
+                        new DocumentReference("wiki1", "XWiki", "groupA")));
 
         Collection<TestAccessRule> rules = mainwiki.getAccessRules();
 
@@ -126,23 +136,20 @@ class TestDefinitionParserTest
         List<Right> rights = new ArrayList<Right>();
         List<RuleState> states = new ArrayList<RuleState>();
 
-        for (TestAccessRule rule : rules) {
-            userRefs.add(rule.getUser());
-            rights.add(rule.getRight());
-            states.add(rule.getState());
-        }
+        extractRuleData(rules, userRefs, rights, states);
 
         assertThat("Users in access rules of main wiki mismatch", userRefs, hasItems(
-            new DocumentReference("wiki", "XWiki", "userA"),
-            new DocumentReference("wiki", "XWiki", "userB"),
-            new DocumentReference("wiki", "XWiki", "groupA"),
-            new DocumentReference("wiki", "XWiki", "groupB")
+                new DocumentReference("wiki", "XWiki", "userA"),
+                new DocumentReference("wiki", "XWiki", "userB"),
+                new DocumentReference("wiki", "XWiki", "groupA"),
+                new DocumentReference("wiki", "XWiki", "groupB")
         ));
         assertThat("Rights in access rules of main wiki mismatch", rights, hasItems(
-            Right.VIEW, Right.LOGIN, Right.EDIT, Right.COMMENT, Right.DELETE, Right.REGISTER, Right.ADMIN, Right.PROGRAM
+                Right.VIEW, Right.LOGIN, Right.EDIT, Right.COMMENT, Right.DELETE, Right.REGISTER, Right.ADMIN,
+                Right.PROGRAM
         ));
         assertThat("State in access rules of main wiki mismatch", states, hasItems(
-            RuleState.ALLOW, RuleState.DENY
+                RuleState.ALLOW, RuleState.DENY
         ));
 
         assertThat("Main wiki should have 3 spaces (2 plus XWiki)", mainwiki.getSpaces().size(), equalTo(3));
@@ -151,7 +158,7 @@ class TestDefinitionParserTest
 
         assertThat("Main wiki should have a space named 'space1'", space, notNullValue());
         assertThat("'space1' of main wiki should have description 'space 1'", space.getDescription(),
-            equalTo("space 1"));
+                equalTo("space 1"));
 
         rules = space.getAccessRules();
 
@@ -161,22 +168,18 @@ class TestDefinitionParserTest
         rights = new ArrayList<Right>();
         states = new ArrayList<RuleState>();
 
-        for (TestAccessRule rule : rules) {
-            userRefs.add(rule.getUser());
-            rights.add(rule.getRight());
-            states.add(rule.getState());
-        }
+        extractRuleData(rules, userRefs, rights, states);
 
         assertThat("Users in access rules of space 1 of main wiki mismatch", userRefs, hasItems(
-            new DocumentReference("wiki", "XWiki", "userA"),
-            new DocumentReference("wiki", "XWiki", "userB"),
-            new DocumentReference("wiki", "XWiki", "groupB")
+                new DocumentReference("wiki", "XWiki", "userA"),
+                new DocumentReference("wiki", "XWiki", "userB"),
+                new DocumentReference("wiki", "XWiki", "groupB")
         ));
         assertThat("Rights in access rules of space 1 of main wiki mismatch", rights, hasItems(
-            Right.VIEW, Right.EDIT, Right.COMMENT, Right.DELETE, Right.ADMIN
+                Right.VIEW, Right.EDIT, Right.COMMENT, Right.DELETE, Right.ADMIN
         ));
         assertThat("State in access rules of space 1 of main wiki mismatch", states, hasItems(
-            RuleState.DENY
+                RuleState.DENY
         ));
 
         assertThat("Space 1 of main wiki should have 2 documents", space.getDocuments().size(), equalTo(2));
@@ -185,9 +188,9 @@ class TestDefinitionParserTest
 
         assertThat("Space 1 of main wiki should have a document named 'document1'", document, notNullValue());
         assertThat("'document1' of 'space1' of main wiki should have description 'Document 1'",
-            document.getDescription(), equalTo("Document 1"));
+                document.getDescription(), equalTo("Document 1"));
         assertThat("'document1' of 'space1' of main wiki should enforce required rights",
-            document.isEnforceRequiredRights(), equalTo(true));
+                document.isEnforceRequiredRights(), equalTo(true));
 
         rules = document.getAccessRules();
 
@@ -197,34 +200,29 @@ class TestDefinitionParserTest
         rights = new ArrayList<>();
         states = new ArrayList<>();
 
-        for (TestAccessRule rule : rules) {
-            userRefs.add(rule.getUser());
-            rights.add(rule.getRight());
-            states.add(rule.getState());
-        }
+        extractRuleData(rules, userRefs, rights, states);
 
         assertThat("Users in access rules of document 1 of space 1 of main wiki mismatch", userRefs, hasItems(
-            new DocumentReference("wiki", "XWiki", "userA"),
-            new DocumentReference("wiki", "XWiki", "userB"),
-            new DocumentReference("wiki", "XWiki", "groupA")
+                new DocumentReference("wiki", "XWiki", "userA"),
+                new DocumentReference("wiki", "XWiki", "userB"),
+                new DocumentReference("wiki", "XWiki", "groupA")
         ));
         assertThat("Rights in access rules of document 1 of space 1 of main wiki mismatch", rights, hasItems(
-            Right.VIEW, Right.EDIT, Right.COMMENT, Right.DELETE
+                Right.VIEW, Right.EDIT, Right.COMMENT, Right.DELETE
         ));
         assertThat("State in access rules of document 1 of space 1 of main wiki mismatch", states, hasItems(
-            RuleState.ALLOW
+                RuleState.ALLOW
         ));
 
         List<TestRequiredRight> testRequiredRights = new ArrayList<>(document.getRequiredRights());
         assertThat("There must be 2 required rights on document 1", testRequiredRights.size(), equalTo(2));
-        assertThat("The first required right on document 1 must have ADMIN right", testRequiredRights.get(0).getRight(),
-            equalTo(Right.ADMIN));
-        assertThat("The first required right on document 1 must have WIKI scope", testRequiredRights.get(0).getScope(),
-            equalTo(EntityType.WIKI));
+        assertThat("The first required right on document 1 must have ADMIN right",
+                testRequiredRights.get(0).getRight(), equalTo(Right.ADMIN));
+        assertThat("The first required right on document 1 must have WIKI scope",
+                testRequiredRights.get(0).getScope(), equalTo(EntityType.WIKI));
         assertThat("The second required right on document 1 must have SCRIPT right",
-            testRequiredRights.get(1).getRight(), equalTo(Right.SCRIPT));
+                testRequiredRights.get(1).getRight(), equalTo(Right.SCRIPT));
         assertThat("The second required right on document 1 must have DOCUMENT scope",
-            testRequiredRights.get(1).getScope(), equalTo(EntityType.DOCUMENT));
+                testRequiredRights.get(1).getScope(), equalTo(EntityType.DOCUMENT));
     }
 }
-
