@@ -19,49 +19,23 @@
  */
 package org.xwiki.rest.internal.resources.classes;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.ws.rs.core.UriInfo;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.xwiki.component.manager.ComponentManager;
-import org.xwiki.component.util.ReflectionUtils;
-import org.xwiki.model.reference.DocumentReference;
-import org.xwiki.model.reference.DocumentReferenceResolver;
-import org.xwiki.model.reference.EntityReference;
 import org.xwiki.rest.XWikiRestException;
-import org.xwiki.rest.internal.ModelFactory;
 import org.xwiki.rest.model.jaxb.Class;
 import org.xwiki.rest.model.jaxb.Classes;
 import org.xwiki.security.SecurityConfiguration;
-import org.xwiki.security.authorization.ContextualAuthorizationManager;
 import org.xwiki.security.authorization.Right;
-import org.xwiki.test.annotation.BeforeComponent;
 import org.xwiki.test.junit5.mockito.ComponentTest;
-import org.xwiki.test.junit5.mockito.InjectComponentManager;
 import org.xwiki.test.junit5.mockito.InjectMockComponents;
 import org.xwiki.test.junit5.mockito.MockComponent;
-import org.xwiki.test.mockito.MockitoComponentManager;
 
-import com.xpn.xwiki.XWiki;
-import com.xpn.xwiki.XWikiContext;
-import com.xpn.xwiki.doc.XWikiDocument;
-import com.xpn.xwiki.objects.classes.BaseClass;
-import com.xpn.xwiki.web.Utils;
+import org.xwiki.model.reference.DocumentReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -73,80 +47,25 @@ import static org.mockito.Mockito.when;
  * @since 11.8RC1
  */
 @ComponentTest
-class ClassesResourceImplTest
+class ClassesResourceImplTest extends AbstractClassesResourceImplTest
 {
     @InjectMockComponents
     private ClassesResourceImpl resource;
 
-    @InjectComponentManager
-    private MockitoComponentManager componentManager;
-
-    @MockComponent
-    @Named("currentmixed")
-    private DocumentReferenceResolver<String> resolver;
-
-    @MockComponent
-    private ContextualAuthorizationManager authorization;
-
-    @MockComponent
-    private Provider<XWikiContext> xcontextProvider;
-
-    @MockComponent
-    private ModelFactory modelFactory;
-
     @MockComponent
     private SecurityConfiguration securityConfiguration;
 
-    @Mock
-    private XWiki xWiki;
-
-    private List<String> availableClasses = Arrays.asList("Foo.Class1", "XWiki.User", "XWiki.Protected", "Bar.Other");
-    private List<DocumentReference> documentReferences = Arrays.asList(
-        new DocumentReference("xwiki", "Foo", "Class1"),
-        new DocumentReference("xwiki", "XWiki", "User"),
-        new DocumentReference("xwiki", "XWiki", "Protected"),
-        new DocumentReference("xwiki", "Bar", "Other")
-    );
-    private List<Class> restClasses;
-
-    XWikiContext xcontext;
-
-    @BeforeComponent
-    void beforeComponent() throws Exception
+    @Override
+    protected Object getResource()
     {
-        this.xcontext = mock(XWikiContext.class);
-        when(this.xcontextProvider.get()).thenReturn(this.xcontext);
-        componentManager.registerComponent(ComponentManager.class, "context", componentManager);
-        Utils.setComponentManager(componentManager);
+        return resource;
     }
 
     @BeforeEach
+    @Override
     void configure() throws Exception
     {
-        when(xcontextProvider.get()).thenReturn(xcontext);
-        when(xcontext.getWiki()).thenReturn(xWiki);
-        when(xWiki.getClassList(xcontext)).thenReturn(availableClasses);
-        UriInfo uriInfo = mock(UriInfo.class);
-        when(uriInfo.getBaseUri()).thenReturn(new URI("/xwiki/rest"));
-        ReflectionUtils.setFieldValue(resource, "uriInfo", uriInfo);
-        when(authorization.hasAccess(eq(Right.VIEW), any())).thenReturn(true);
-
-        this.restClasses = new ArrayList<>();
-        for (int i = 0; i < availableClasses.size(); i++) {
-            when(resolver.resolve(eq(availableClasses.get(i)), any())).thenReturn(documentReferences.get(i));
-            XWikiDocument doc = mock(XWikiDocument.class);
-            BaseClass baseClass = mock(BaseClass.class);
-            Class zeclass = mock(Class.class);
-            // the cast here is mandatory, else Mockito register a mock for the call to
-            // getDocument(DocumentReference, XWikiContext)
-            when(xWiki.getDocument((EntityReference)documentReferences.get(i), xcontext)).thenReturn(doc);
-            when(doc.getXClass()).thenReturn(baseClass);
-            when(modelFactory.toRestClass(any(), eq(new com.xpn.xwiki.api.Class(baseClass, xcontext))))
-                .thenReturn(zeclass);
-            when(zeclass.getId()).thenReturn(availableClasses.get(i));
-            restClasses.add(zeclass);
-        }
-
+        super.configure();
         when(this.securityConfiguration.getQueryItemsLimit()).thenReturn(1000);
     }
 
