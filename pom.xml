@@ -145,6 +145,14 @@
   <!-- Dependency Management that are used in platform and in subprojects too (like xwiki-enterprise) -->
   <dependencyManagement>
     <dependencies>
+            <!-- Security fix: Force commons-collections to 3.2.2 to remediate CVE-2015-7501
+           (Deserialization of Untrusted Data, CWE-502, CVSS 9.8 Critical)
+           Transitive dependency pulled in via securityfilter:2.0 -->
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.2</version>
+      </dependency>
       <!-- Standard dependencies used in several modules -->
       <dependency>
         <groupId>com.mchange</groupId>
