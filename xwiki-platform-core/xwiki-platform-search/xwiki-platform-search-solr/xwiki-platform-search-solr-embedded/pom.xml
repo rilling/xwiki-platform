@@ -47,11 +47,19 @@
     <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-solrj</artifactId>
+      <version>9.7.0</version>
     </dependency>
+
     <!-- Embedded Solr instance. -->
     <dependency>
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-core</artifactId>
+      <version>9.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.solr</groupId>
+      <artifactId>solr-analysis-extras</artifactId>
+      <version>9.7.0</version>
     </dependency>
     <!-- Jersey require javax validation but declare a dependency on jakarta validation -->
     <dependency>
