@@ -44,7 +44,7 @@
     "@xwiki/platform-macros-service": "workspace:*",
     "@xwiki/platform-model-api": "workspace:*",
     "@xwiki/platform-uniast-api": "workspace:*",
-    "fast-xml-parser": "catalog:",
+    "fast-xml-parser": "5.3.4",
     "mdast-util-gfm-strikethrough": "catalog:",
     "mdast-util-gfm-table": "catalog:",
     "mdast-util-gfm-task-list-item": "catalog:",
